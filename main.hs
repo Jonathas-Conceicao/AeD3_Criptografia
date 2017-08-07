@@ -5,8 +5,11 @@ import Data.List
 import Data.Maybe
 import System.Environment
 
-import Data.ByteString as BS
-import Data.ByteString.Char8 as BSChar
+import Data.Word
+import Data.Binary
+import Data.Binary.Get
+import Data.ByteString.Lazy as BS
+import Data.ByteString.Lazy.Char8 as BSChar
 
 import OpenSSL.PEM
 import OpenSSL.RSA
@@ -35,10 +38,16 @@ genPrivateExponent e ln = if (privExp < 0) then (privExp + ln) else privExp
   where
     privExp = sndOfTriple $ eGCD e ln
 
+decrypt :: (Integral a) => PrivateExponent -> Totient -> a -> a
+decrypt e ln a = (fromIntegral (a^e)) `mod` (fromIntegral ln)
+
 eGCD :: Integer -> Integer -> (Integer, Integer, Integer) -- Extended Euclidean Algorithm from wikibooks.org
 eGCD 0 b = (b, 0, 1)
 eGCD a b = let (g, s, t) = eGCD (b `mod` a) a
            in (g, t - (b `div` a) * s, s)
+
+mod' :: (Integral a, Integral b, Integral c) => a -> b -> c
+mod' a b = (fromIntegral a) `mod` (fromIntegral b)
 
 main :: IO ()
 main = do
@@ -56,21 +65,22 @@ main = do
   --line <- getLine
   let line = "68549458128220050192491632973"
   let q = read line
-  let ln = lcm (p-1) (q-1)
+  let ln = (p-1) * (q-1)
   print $ "RSA's L (l):" ++ (show ln)
   let privExp = genPrivateExponent pExp ln
   print $ "Priave key's expoent (d):" ++ (show $ privExp)
-  cipherKey <- BS.readFile (args !! 1)
+  cipherKeyBS <- BS.readFile (args !! 1)
   print "Cripted key"
-  BSChar.putStrLn cipherKey
-  print $ "Length of the cripted key:" ++ (show $ BS.length cipherKey)
-  let key = BS.map (*(fromInteger privExp)) cipherKey
-  print "Uncripted key"
-  BSChar.putStrLn key
-  BS.writeFile ((args !! 1) ++ ".dec") key
-  print $ "Length of the uncripted key:" ++ (show $ BS.length key)
-  cipherMenssage <- BS.readFile (args !! 2)
+  BSChar.putStrLn cipherKeyBS
+  -- let key = (decrypt privExp ln cipherKey)
+  -- print key
+  -- print cipherKey
+  -- -- print "Uncripted key"
+  -- -- BSChar.putStrLn key
+  -- LBS.writeFile ((args !! 1) ++ ".dec") key
+  -- print $ "Length of the uncripted key:" ++ (show $ BS.length key)
+  -- cipherMenssage <- BS.readFile (args !! 2)
   -- print "Cripted Menssage"
   -- BSChar.putStrLn cipherMenssage
-  context <- newAESCtx Decrypt key key
+  -- context <- newAESCtx Decrypt key key
   return ()
