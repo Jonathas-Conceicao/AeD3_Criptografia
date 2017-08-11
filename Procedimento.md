@@ -25,5 +25,40 @@ O site http://www.numberempire.com/numberfactorizer.php foi então utilizado par
 P = 64624507535936447523680179787  
 Q = 68549458128220050192491632973  
 
-Um simples código Haskell retirado do wikibooks.org foi utilizado para calcular o Algorítimo Euclidiano Extendido e encontrar o modular multiplicativo inverso do expoente público:  
+Um simples código Haskell retirado do wikibooks.org foi utilizado para calcular o Algorítimo Euclidiano Extendido e encontrar o modular multiplicativo inverso do expoente público e outros valores necessários:  
 D = 1508585706641315096531745723412350251454473514304313366161  
+E1= 30837576089405076878832571867  
+E2= 35951935163086188950002630705  
+Coeff= 62783713230537502537669730250  
+
+Essas informações foram postas num arquivo de configuração asn1 para gerar o certificado da chave privada utilizando:  
+```
+openssl asn1parse -genconf config.cnf -out newKeyPair.der  
+```
+
+Com isso pode-se gerar a chave privada com:  
+```
+openssl rsa -inform der -in newKeyPair.der -out private.pem    
+```
+
+Agora para descriptografar a chave da mensagem:  
+```
+openssl rsautl -decrypt -in cipher_key -out cipher_key_dec -inkey private.key   
+```
+Eis a chave descriptografada:  
+**Zimmermann**  
+
+Apesar de tudo quando eu tento descriptografar o texto original com a chave encontrada apenas caracteres especiais e uma mensagem de erro são dados como resposta.
+A chave RSA privada parece certa, pois o *-check* dela retorna *"RSA key ok"*, os valores lidos dela batem com os cálculos e a chave pública extraída dela é exatamente a mesma fornecida pelo professor para o trabalho.
+
+Eu não sei bem o que eu fiz errado durante o processo para que eu não conseguisse chegar ao resultado final.
+Mas os passos apresentados aqui foi o mais longe que eu consegui chegar no que eu acredito ser o caminho certo.
+Comando utilizado para descriptografar o texto original:  
+```
+openssl aes-256-cbc -d -a -in cipher_text -pass file:./cipher_key_dec -out cipher_text_dec
+```
+Erro recebido:
+```
+bad decrypt  
+139669847017216:error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt:crypto/evp/evp_enc.c:568:
+```
